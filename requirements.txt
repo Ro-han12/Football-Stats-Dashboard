@@ -1,0 +1,9 @@
+## Python 3.x
+ultralytics
+supervision
+opencv-python
+numpy
+Matplotlib
+pandas
+scikit-learn
+streamlit
