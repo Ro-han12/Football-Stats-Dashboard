@@ -15,18 +15,6 @@ except ImportError:
     CV2_AVAILABLE = False
     print("OpenCV (cv2) not available. Some video processing features may be limited.")
 
-# Check if we are running on Streamlit Cloud
-import socket
-def is_streamlit_cloud():
-    """Detect if running on Streamlit Cloud environment."""
-    try:
-        host = socket.gethostname()
-        return "streamlit" in host.lower() or "containers" in host.lower()
-    except:
-        return False
-
-ON_STREAMLIT_CLOUD = is_streamlit_cloud()
-
 # Set page config
 st.set_page_config(
     page_title="Football Stats Dashboard",
@@ -56,12 +44,18 @@ def load_latest_results(results_dir="results"):
 
 def process_video(video_path):
     """Process the uploaded video file using the main.py script."""
-    # Check if running on Streamlit Cloud and handle accordingly
-    if ON_STREAMLIT_CLOUD:
-        st.warning("Video processing is not available on Streamlit Cloud. Please run this app locally for full functionality.")
-        st.info("You can still view pre-processed results if available.")
-        return False, None
+    # Check if OpenCV is available (required by the main.py script)
+    if not CV2_AVAILABLE:
+        st.error("""
+        Error: OpenCV (cv2) is not available on this system.
         
+        Video processing requires OpenCV, which could not be imported. 
+        This may be due to missing system dependencies.
+        
+        If you're running this on Streamlit Cloud, please contact the app owner.
+        """)
+        return False, None
+    
     # Get the uploaded file name instead of using a hardcoded name
     file_name = video_path.name
     
@@ -374,59 +368,34 @@ def main():
     st.title("⚽ Football Stats Dashboard")
     st.markdown("Upload a football video to analyze player movements, shots, passes, and dribbles.")
     
-    # Add a notice if running on Streamlit Cloud
-    if ON_STREAMLIT_CLOUD:
-        st.warning("""
-        Running on Streamlit Cloud with limited functionality. 
-        Video processing is disabled, but you can view pre-processed results if available.
-        For full functionality, please run this app locally.
-        """)
-    
     # Sidebar for video upload and processing
     with st.sidebar:
         st.header("Video Upload")
+        uploaded_file = st.file_uploader("Upload a football video", type=["mp4", "avi", "mov"])
         
-        if not ON_STREAMLIT_CLOUD:
-            uploaded_file = st.file_uploader("Upload a football video", type=["mp4", "avi", "mov"])
+        if uploaded_file is not None:
+            # Display video info
+            file_details = {
+                "Filename": uploaded_file.name, 
+                "Size": f"{uploaded_file.size / (1024*1024):.2f} MB",
+                "Type": uploaded_file.type
+            }
+            st.write("**File Information:**")
+            for key, value in file_details.items():
+                st.write(f"- {key}: {value}")
             
-            if uploaded_file is not None:
-                # Display video info
-                file_details = {
-                    "Filename": uploaded_file.name, 
-                    "Size": f"{uploaded_file.size / (1024*1024):.2f} MB",
-                    "Type": uploaded_file.type
-                }
-                st.write("**File Information:**")
-                for key, value in file_details.items():
-                    st.write(f"- {key}: {value}")
-                
-                # Button to process video with the filename in it
-                process_button = st.button(f"Process '{uploaded_file.name}'")
-                
-                if process_button:
-                    success, output_path = process_video(uploaded_file)
-                    if success:
-                        # Store the output path in session state
-                        st.session_state.last_processed_video = output_path
-                        
-                        # Also store that we've just processed a video
-                        st.session_state.just_processed = True
-                        st.rerun()
-        else:
-            st.info("Video upload and processing is disabled on Streamlit Cloud.")
+            # Button to process video with the filename in it
+            process_button = st.button(f"Process '{uploaded_file.name}'")
             
-            # Add a sample data option for cloud deployment
-            if st.button("Load Sample Data"):
-                # Load a pre-processed sample result
-                sample_results_path = "results/sample_results.json"
-                if os.path.exists(sample_results_path):
-                    with open(sample_results_path, 'r') as f:
-                        st.session_state.results = json.load(f)
-                        st.session_state.just_processed = True
-                        st.success("Sample data loaded!")
-                        st.rerun()
-                else:
-                    st.error("No sample data available. Please run locally for full functionality.")
+            if process_button:
+                success, output_path = process_video(uploaded_file)
+                if success:
+                    # Store the output path in session state
+                    st.session_state.last_processed_video = output_path
+                    
+                    # Also store that we've just processed a video
+                    st.session_state.just_processed = True
+                    st.rerun()
         
         # Video troubleshooting section
         if 'last_processed_video' in st.session_state and st.session_state.last_processed_video:
