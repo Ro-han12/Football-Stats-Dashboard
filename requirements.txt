@@ -1,9 +1,10 @@
 ## Python 3.x
 ultralytics
 supervision
-opencv-python
+opencv-python-headless
 numpy
 Matplotlib
 pandas
 scikit-learn
 streamlit
+ffmpeg-python

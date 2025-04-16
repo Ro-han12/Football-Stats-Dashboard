@@ -7,7 +7,13 @@ import numpy as np
 import time
 from pathlib import Path
 import tempfile
-import cv2
+# Make cv2 import optional
+try:
+    import cv2
+    CV2_AVAILABLE = True
+except ImportError:
+    CV2_AVAILABLE = False
+    print("OpenCV (cv2) not available. Some video processing features may be limited.")
 
 # Set page config
 st.set_page_config(
