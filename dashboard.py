@@ -44,18 +44,6 @@ def load_latest_results(results_dir="results"):
 
 def process_video(video_path):
     """Process the uploaded video file using the main.py script."""
-    # Check if OpenCV is available (required by the main.py script)
-    if not CV2_AVAILABLE:
-        st.error("""
-        Error: OpenCV (cv2) is not available on this system.
-        
-        Video processing requires OpenCV, which could not be imported. 
-        This may be due to missing system dependencies.
-        
-        If you're running this on Streamlit Cloud, please contact the app owner.
-        """)
-        return False, None
-    
     # Get the uploaded file name instead of using a hardcoded name
     file_name = video_path.name
     
